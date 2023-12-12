@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>GALiCA</title>
+  <link rel="icon" href="img/favicon.ico" type="image/x-icon">
+  <script src="http://unpkg.com/tone"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.11/lib/codemirror.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.11/lib/codemirror.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.11/mode/javascript/javascript.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/search/searchcursor.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/addon/search/search.min.js"></script>
+
+  <script src="onLoop.js"></script>
+  <script type="module" src="src/oscilloscope.js"></script>
+  <script type="module" src="src/midi_control.js"></script>
+  <script type="module" src="src/algorithm_control.js"></script>
+  <script type="module" src="src/seq_control.js"></script>
+  <script type="module" src="src/midi_main.js"></script>
+  <script type="module" src="src/formatting.js"></script>
+  <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+
+<body>
+  <div class="whole-page">
+    <div class="top-container">
+      <button id="reset-button" class="techy-button">Reset Code</button>
+      <div class="top-word">Most recent MIDI: </div>
+      <div id="lastMidi" class="top-word">lastMidi</div>
+      <img id="GALiCA-name" src="img/galica_logo_3.png" alt="GALiCA">
+    </div>
+    <div class="live-coding-container">
+      <div id="editor" class="codemirror-container">
+        <div class="code-editor"></div>
+      </div>
+      <div class="resizable"></div>
+      <div class="parent-container">
+        <div id="assignments" class="alg-current">
+          <h2>Algorithm Assignments</h2>
+        </div>
+        <div id="algs" class="alg-display">
+          <h2>Available Algorithms</h2>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</body>

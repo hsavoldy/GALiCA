@@ -1,2 +1,2 @@
-# GALiCA
-A Gestural Live Coding System
+# midiCoder
+Live coding environment for working with MIDI controllers
