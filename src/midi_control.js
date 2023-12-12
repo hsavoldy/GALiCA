@@ -1,4 +1,4 @@
-import {initializeCodeBox, midiClock, onClock, globalClock, setupClock} from './midi_main.js';
+import {initializeCodeBox, midiClock, onClock, globalClock, setupClock} from './main.js';
 import {Seq, seqs_dict} from './seq_control.js';
 import { makingIf, createTernStatement } from './algorithm_control.js';
 

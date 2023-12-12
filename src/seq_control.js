@@ -1,4 +1,4 @@
-import { globalClock, major, minor, scale, beatsPerMeasure } from './midi_main.js';
+import { globalClock, major, minor, scale, beatsPerMeasure } from './main.js';
 import { muted, midi, outputMidiID, beat } from './midi_control.js';
 import { floor, ceil } from "./midi_math.js"
 

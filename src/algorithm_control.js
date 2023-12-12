@@ -1,4 +1,4 @@
-import { addToEditor, replaceLastLine, replaceString, freezeEditor, unfreezeEditor, algs, alg_names } from './midi_main.js'
+import { addToEditor, replaceLastLine, replaceString, freezeEditor, unfreezeEditor, algs, alg_names } from './main.js'
 export var makingIf = false;
 var algStage = 0;
 var curAlg = '';
