@@ -1,3 +1,3 @@
 # GALiCA
 
-Create highly flexible sequencer objects and modify them with a MIDI controller!
+Codebase for the MIT thesis GAliCA: A Gestural Approach to Live Coding Algorithms
