@@ -1,4 +1,4 @@
-import {onMIDISuccess, onMIDIFailure} from './midi_control.js';
+import {onMIDISuccess, onMIDIFailure} from './midiControl.js';
 
 document.addEventListener('DOMContentLoaded', function() {
 	const editor = document.getElementById('editor');

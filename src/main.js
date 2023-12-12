@@ -1,11 +1,11 @@
 import {
 	midi, onMIDISuccess, onMIDIFailure, setMidiInput, setMidiOutput, getMidiIO,
 	handleMidiInput, outputMidiID, midiMap, ccMap, stopMap, mute, muted, toggleMute
-} from "./midi_control.js";
-import { Seq, seqs_dict, checkSeqs, _, stopEverything } from './seq_control.js'
-import { makingIf, startTern, addToAlgs, assignAlg } from "./algorithm_control.js";
+} from "./midiControl.js";
+import { Seq, seqs_dict, checkSeqs, _, stopEverything } from './seqControl.js'
+import { makingIf, startTern, addToAlgs, assignAlg } from "./algorithmControl.js";
 import { createStarterText, starterCode } from "./starterCode.js"
-import { floor, ceil, peak, cos, round, trunc, abs } from './midi_math.js';
+import { floor, ceil, peak, cos, round, trunc, abs } from './midiMath.js';
 
 //http-server -o index.html -p 8000
 export let globalClock = 0;

@@ -1,6 +1,6 @@
 import { globalClock, major, minor, scale, beatsPerMeasure } from './main.js';
-import { muted, midi, outputMidiID, beat } from './midi_control.js';
-import { floor, ceil } from "./midi_math.js"
+import { muted, midi, outputMidiID, beat } from './midiControl.js';
+import { floor, ceil } from "./midiMath.js"
 
 
 export var bar = 0;

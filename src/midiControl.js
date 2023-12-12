@@ -1,6 +1,6 @@
 import {initializeCodeBox, midiClock, onClock, globalClock, setupClock} from './main.js';
-import {Seq, seqs_dict} from './seq_control.js';
-import { makingIf, createTernStatement } from './algorithm_control.js';
+import {Seq, seqs_dict} from './seqControl.js';
+import { makingIf, createTernStatement } from './algorithmControl.js';
 
 export var midi = null;
 export var muted = false;
