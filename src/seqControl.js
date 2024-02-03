@@ -114,9 +114,15 @@ export class Seq {
 
 	sendNote() {
 		var noteNum = this.curVal;
-		//send note off if value is not ≈ (tie), e.g. -87654321
+
+		//look for ties, e.g. -87654321
 		if (noteNum > -900000000 && noteNum < -7000000) return;
-		this.sendNoteOff(this.lastNoteSent, this.channel);
+
+		//look for existing active note to send noteoff
+		if( this.lastNoteSent !== -1){
+			this.sendNoteOff(this.lastNoteSent, this.channel);
+			if (this.monitor) console.log(this.name + ' noteoff: ' + this.lastNoteSent);
+		}
 
 		//calculate new midi note based on scale degree and scale
 		var midiNote;
@@ -143,7 +149,10 @@ export class Seq {
 		}
 
 		//look for rests
-		if (midiNote < 0 || midiNote == null || midiNote > 127) { return; }
+		if (midiNote < 0 || midiNote == null || midiNote > 127) { 
+			this.lastNoteSent = -1;
+			return; 
+		}
 
 		//send MIDI msg
 		const noteOnMessage = [0x90 + this.channel - 1, midiNote, this.velocity];    // 0x90 note on + channel, midi pitch num, velocity
