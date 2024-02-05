@@ -19,8 +19,16 @@ export function onMIDISuccess(midiAccess) {
 
 	initializeCodeBox();
 	setupClock();
+	initializeGlobalVariables();
 }
 
+function initializeGlobalVariables(){
+	for(let i=0;i<128;i++){
+		eval('globalThis.CC'+i+'='+0+';');
+		eval('globalThis.CC'+i+'_func = function(){return CC' +i+ '}');
+	}
+	globalThis.CC = new Array(128).fill(0)
+}
 
 export function onMIDIFailure(msg) {
 	console.error(`Failed to get MIDI access - ${msg}`);
@@ -149,6 +157,7 @@ function handleCC(message){
 	if (command >= 176 & command <= 191) { //may be higher than 176 depending on channel number
 		midiMsgs[note] = value;
 		eval('globalThis.CC'+note+'='+value+';');
+		try{ globalThis.CC[note] = value} catch(e){console.log(e)}
 		try{
 			// console.log('CC'+note+'_func');
 			eval('globalThis.CC'+note+'_func')();
