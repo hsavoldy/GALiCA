@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		 // Calculate new width
 		 let newWidth = startWidth + (e.clientX - startX) - (paddingLeft + paddingRight + marginLeft + marginRight);
 
+		 console.log('new width' + newWidth)
 		 editor.style.width = `${newWidth}px`;
 	}
 
