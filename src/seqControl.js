@@ -1,6 +1,7 @@
 import { globalClock, major, minor, scale, beatsPerMeasure } from './main.js';
 import { muted, midi, outputMidiID, beat } from './midiControl.js';
-import { floor, ceil } from "./midiMath.js"
+import { floor,ceil,peak,round,trunc,abs,cos,random} from './midiMath.js'
+import{ textSources, textHeaders, updateDisplay, display, curDisplaySource } from './display.js'
 
 
 export var bar = 0;
@@ -31,7 +32,7 @@ export function reset() {
 
 function checkChannel(channel) {
 	if (channel > 16) {
-		console.warn("Cannot have a channel larger than 16. Using channel 1.");
+		console.warn("Available MIDI Channels are 1-16. Using channel 1.");
 		channel = 1;
 	} else if (channel <= 0) {
 		channel = 1;
@@ -52,6 +53,7 @@ export class Seq {
 	constructor(vals, durs = 1 / 4, channel = 0) {
 		this.vals = vals;
 		this.durs = durs;
+		this.index = 0;
 		this.valsInd = 0;
 		this.dursInd = 0;
 		this.noteInc = 1;
@@ -83,6 +85,7 @@ export class Seq {
 		this.advanceStep();
 		this.callback();
 		this.stepFunc();
+		this.updateDisplay();
 	}
 
 	advanceStep() {
@@ -187,39 +190,39 @@ export class Seq {
 	nextVal() {
 		if (this.vals.length === 0) {
 			this.valsInd = 0;
+			this.index = 0;
 			return null;
 		}
 		var note = this.vals[Math.round(this.valsInd >= 0 ? this.valsInd : (this.vals.length - this.valsInd))];
-		//below removes increment and moves this to updatevalsIndex()
+		//below removes increment and moves this to updateIndex()
 
-		this.updatevalsIndex()
-		//handle negative indexes
+		//update index
+		this.valsInd = this.updateIndex(this.valsInd)
+
+		//handle out of bounds
 		var sign = this.valsInd != 0 ? Math.round(this.valsInd / Math.abs(this.valsInd)) : 1;
-
 		this.valsInd = this.valsInd * sign;
 		this.valsInd = Math.round(((this.valsInd) % this.vals.length) * sign);
+		this.index = this.valsInd;''
 
 		var nextStep = null;
-		if (typeof this.durs !== 'number') {
+		//take care of incrementing duration index in case where durs is an array
+		if (Array.isArray(this.durs)) {
+			this.updateDurIndex();
 			nextStep = this.durs[floor(this.dursInd)];
-		} else {
+		} else{
 			nextStep = this.durs;
 		}
 		this.nextValTime = globalClock + nextStep * 24 * 4;
-
-		//take care of incrementing durssation index in case where durs is an array
-		if (typeof this.durs !== 'number') {
-			this.dursInd = (this.dursInd + 1) % this.durs.length;
-		} else {
-			this.updateDurIndex();
-		}
-
+		
 		return note
 	}
 
-	updatevalsIndex() { this.valsInd = (this.valsInd + this.noteInc) }
+	updateIndex(index) { 
+		return (index + this.noteInc);
+	}
 
-	updateDurIndex() { this.dursInd = (this.dursInd + this.dursInc) }
+	updateDurIndex() { this.dursInd = (this.dursInd + this.dursInc) % this.durs.length }
 
 	repopulate() {
 		this.newVals = [];
@@ -229,6 +232,7 @@ export class Seq {
 	stopPop() {
 		if (this.valsInd >= this.newVals.length) {
 			this.valsInd = this.newVals.length - 1;
+			this.index = this.valsInd;
 		}
 		this.vals = this.newVals;
 		this.repopulating = false;
@@ -243,12 +247,17 @@ export class Seq {
 		this.sendNoteOff(this.lastNoteSent, this.channel);
 	}
 
+	panic(){
+		for( let i=0;i<127;i++ ) this.sendNoteOff(i, this.channel);
+	}
+
 	start() {
 		this.stopped = false;
 	}
 
 	reset() {
 		this.valsInd = 0;
+		this.index = 0;
 		this.dursInd = 0;
 		this.nextValTime = 0;
 		this.sendNoteOff(this.lastNoteSent, this.channel);
@@ -265,6 +274,7 @@ export class Seq {
 		if (this.valsName) {
 			var newVals = eval('globalThis.' + this.valsName);
 			this.valsInd = this.valsInd % newVals.length;
+			this.index = this.valsInd;
 			this.vals = newVals;
 		}
 		if (this.dursName) {
@@ -274,6 +284,67 @@ export class Seq {
 			}
 			this.durs = newDurs;
 		}
+	}
+
+	updateDisplay(){
+		  const rows = [];
+		  const numCols = 8;
+		  const numRows = Math.ceil(this.vals.length / numCols);
+		  const forceSpace = 1; //manually specify extra space between values
+
+		  //format rests and ties
+		  const replacedVals = this.vals.map(value => {
+			  if (value < -999999990) {
+			    return '_';
+			  } else if (value < -27654321) {
+			    return '^'
+			  } else {
+			    return value;
+			  }
+			});
+
+		  const maxLength = Math.max(...replacedVals.map(value => value.toString().length)) + forceSpace;
+
+			// Format and align values vertically
+			const formattedValues = replacedVals.map(value => {
+				let valueString = value.toString();
+				if(value < -999999990) valueString = '_'
+				else if( value < -27654321 ) valueString = '&nbsp;'
+				const leadingSpaces = '&nbsp;'.repeat(maxLength - valueString.length);
+				return leadingSpaces + valueString;
+			});
+			
+			formattedValues[this.valsInd] = `<span style="font-weight: bold; color: red;">${formattedValues[this.valsInd]}</span>`
+
+			//generate rows of values
+		  for (let i = 0; i < numRows; i++) {
+		    const rowValues = formattedValues.slice(i * numCols, (i + 1) * numCols);
+		    const formattedRow = rowValues.map((value, index) => {
+		      value = value < -999999990 ? '_' : value < -27654321 ? '&nbsp;' : value
+		      if (index%4 === 3) {
+		        return '' + value + '&emsp;&emsp;'; // Add a tab space between the first and last 4 values
+		      } else {
+		        return value + '';
+		      }
+		    });
+		    rows.push(formattedRow.join('\t')); // Join values with tabs
+		  }
+
+		  // Add a blank line after every 4 rows
+		  const formattedTextWithBlankLines = [];
+		  for (let i = 0; i < rows.length; i++) {
+		    formattedTextWithBlankLines.push(rows[i]);
+		    if (i % 4 == 3 ) {
+		      formattedTextWithBlankLines.push('\r\r'); // Add a blank line
+		    }
+		  }
+
+		  const formattedText = formattedTextWithBlankLines.join('\n'); // Join rows with line breaks
+
+		  textSources[this.name] = formattedText
+		  textHeaders[this.name] = 'Sequencer ' + this.name + ' values'
+		  //curDisplaySource = this.name
+		  updateDisplay()
 	}
 
 }

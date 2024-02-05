@@ -1,8 +1,10 @@
 import { addToEditor, replaceLastLine, replaceString, freezeEditor, unfreezeEditor, algs, alg_names } from './main.js'
+import{ textSources, textHeaders, updateDisplay, display, curDisplaySource } from './display.js'
+import { globalClock, major, minor, scale, beatsPerMeasure } from './main.js';
+
 export var makingIf = false;
 var algStage = 0;
 var curAlg = '';
-
 
 /************************************
  * 
@@ -10,6 +12,7 @@ var curAlg = '';
  * 
  * ************************************/
 
+//add assignment strings to algs
 export function addToAlgs(alg){
 	if(!algs.includes(alg)){
 		algs.push(alg);
@@ -20,9 +23,13 @@ export function addToAlgs(alg){
 		text += i+1 + ') ' + alg + '<br>';
 		i += 1;
 	}
-	document.getElementById("algs").innerHTML = "<h2>Available Algorithms</h2>" + text;
+   textSources['algs'] = text
+   textHeaders['algs'] = 'Available Algorithms'
 }
 
+//assign an algorithm to a CC
+//varName is the variable holding the current algorithm
+//use incoming CC to select an algorithm from the list of available algs
 export function assignAlg(varName, CC){
 	if(varName in alg_names){
 		console.log('here');
@@ -30,14 +37,17 @@ export function assignAlg(varName, CC){
 	}
 	alg_names[varName] = 0;
 	if(algs.length>0){
-		var text = document.getElementById("assignments").innerHTML;
+		//var text = document.getElementById("divA").innerHTML;
+      var text = textSources['algAssignment']
 		var exp = new RegExp(`${varName}\\s*=.*<br>`, 'g');
 		if(exp.test(text)){
 			text = text.replace(exp, varName + ' = ' + algs[0] + '<br>');
 		}else{
 			text += varName + ' = ' + algs[0] + '<br>';
 		}
-		document.getElementById("assignments").innerHTML = text;
+      textSources['algAssignment'] = text
+      textHeaders['algAssignment'] = 'Selected Algorithms'
+		//document.getElementById("divA").innerHTML = text;
 	}
 	var CC_str = eval(CC);
 	var toRun = 'globalThis.CC'+CC_str+'_func = function(){changeAlg(\'' + varName + '\',' + 'CC'+ CC_str + ');}';
@@ -47,22 +57,28 @@ export function assignAlg(varName, CC){
 }
 
 //newVal is 0-127
+//this selects the algorithm for an element. Run in block above
 export function changeAlg(varName, newVal){
 	var newAlgInd = Math.floor(newVal/128 * algs.length);
-	alg_names[varName] = newAlgInd;	
+	alg_names[varName] = newAlgInd;
+   
+
+   const cur_alg = algs[newAlgInd]
+
 	if(algs.length>0){
-		var text = document.getElementById("assignments").innerHTML;
+		var text = textSources['algAssignment'];
 		var exp = new RegExp(`${varName}\\s*=.*<br>`, 'g');
 		if(exp.test(text)){
 			text = text.replace(exp, varName + ' = ' + algs[newAlgInd] + '<br>');
 		}else{
-			text += varName + ' = ' + algs[0] + '<br>';
-		}
-		document.getElementById("assignments").innerHTML = text;
+			text += varName + ' = ' + algs[0] + '<br>';		}
+      textSources['algAssignment'] = text
+      updateDisplay()
+		//document.getElementById("divA").innerHTML = text;
 	}
-
 }
 
+//this actually runs the algorithm itself once it has been chosen
 export function runAlgLines(varName){
 	var code = editor.getValue();
 	var lines = code.split('\n');

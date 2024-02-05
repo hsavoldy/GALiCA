@@ -6,6 +6,7 @@ import { Seq, seqs_dict, checkSeqs, _, stopEverything } from './seqControl.js'
 import { makingIf, startTern, addToAlgs, assignAlg } from "./algorithmControl.js";
 import { createStarterText, starterCode } from "./starterCode.js"
 import { floor, ceil, peak, cos, round, trunc, abs } from './midiMath.js';
+import{ updateDisplay, display } from './display.js'
 
 //http-server -o index.html -p 8000
 export let globalClock = 0;
@@ -65,6 +66,16 @@ function changeRow(row) {
 	console.log('beats per measure: ' + beatsPerMeasure);
 }
 
+function panic(){
+	for(let i=0;i<16;i++){
+		for(let j=0;j<128;j++) {
+			var channel = i+1;
+			const noteOffMessage = [0x80 + channel - 1, j, 0];    // 0x80 note off + channel, midi pitch num, velocity
+			var output = midi.outputs.get(outputMidiID);
+			output.send(noteOffMessage);
+		}
+	}
+}
 
 /**
 * Change whether clock is internal or from incoming MIDI clock messages
