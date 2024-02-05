@@ -1,4 +1,7 @@
-//math
+//math shortcuts
+
+// import { floor,ceil,peak,round,trunc,abs,cos,random} from './midiMath.js'
+
 export let floor = function(val){
   if(val < -100000) return _
   return Math.floor(val)
@@ -38,4 +41,8 @@ export let abs = function(val){
 export let cos = function(val){
   if(val < -100000) return _
   return Math.cos(val)
+}
+
+export let random = function(val = 1){
+  return Math.random() * val
 }
