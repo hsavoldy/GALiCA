@@ -1,4 +1,4 @@
-import { globalClock, major, minor, scale, beatsPerMeasure } from './main.js';
+ import { globalClock, resetClock, major, minor, scale, beatsPerMeasure, seqsToStart } from './main.js';
 import { muted, midi, outputMidiID, beat } from './midiControl.js';
 import { floor,ceil,peak,round,trunc,abs,cos,random} from './midiMath.js'
 import{ textSources, textHeaders, updateDisplay, display, curDisplaySource } from './display.js'
@@ -27,7 +27,8 @@ export function reset() {
 	for (var key in seqs_dict) {
 		seqs_dict[key].reset();
 	}
-	globalClock = 0;
+	resetClock() //must update globalclock in main.js?
+	//globalClock = 0;
 }
 
 function checkChannel(channel) {
@@ -68,7 +69,7 @@ export class Seq {
 		this.restarted = false;
 		this.monitor = false;
 		this.newVals = [];
-		this.lastNoteSent = null;
+		this.lastNoteSent = -1;
 		if (channel > 16) {
 			console.warn("Cannot have a channel larger than 16. Setting channel to 1.");
 			this.channel = 1;
@@ -116,57 +117,72 @@ export class Seq {
 	}
 
 	sendNote() {
-		var noteNum = this.curVal;
+		var noteArray = Array.isArray(this.curVal) ? this.curVal : [this.curVal];
+		let i=0
+		let prevNotes = this.lastNoteSent
+		this.lastNoteSent = []
 
-		//look for ties, e.g. -87654321
-		if (noteNum > -900000000 && noteNum < -7000000) return;
+		//console.log(noteArray, '\n', prevNotes)
 
-		//look for existing active note to send noteoff
-		if( this.lastNoteSent !== -1){
-			this.sendNoteOff(this.lastNoteSent, this.channel);
-			if (this.monitor) console.log(this.name + ' noteoff: ' + this.lastNoteSent);
-		}
+		for(i=0;i<noteArray.length;i++){
+			var noteNum = noteArray[i]
+		
+			// var isArray = Array.isArray(noteNum) //support arrays of numbers
+			// var prevIsArray = Array.isArray(this.lastNoteSent)
 
-		//calculate new midi note based on scale degree and scale
-		var midiNote;
-		if (scale != null) {
-			var accidental = false;
-			var adjustedNoteNum = noteNum;
-			if (noteNum * 10 % 10 != 0) { //is there a decimal?
-				adjustedNoteNum = Math.floor(Math.abs(noteNum)) * noteNum / Math.abs(noteNum); //make positive for floor then add back sign
-				accidental = true;
-			}
-			midiNote = scale.slice(adjustedNoteNum % scale.length)[0] + Math.floor(adjustedNoteNum / scale.length) * 12 + (this.octave * 12);
+			//look for ties, e.g. -87654321
+			if (noteNum > -900000000 && noteNum < -7000000 && !isArray) return;
 
-			//increase MIDI note by one if there was a decimal
-			if (accidental) {
-				if (noteNum > 0) {
-					midiNote += 1;
-				} else {
-					midiNote -= 1;
+			//look for existing active note to send noteoff
+			if( prevNotes[0] !== -1){
+				for(let j=0;j< prevNotes.length ;j++){
+					this.sendNoteOff(prevNotes[j], this.channel);
+					if (this.monitor) console.log(this.name + ' noteoff: ' + prevNotes[j]);
 				}
 			}
-		}
-		else {
-			midiNote = noteNum;
-		}
 
-		//look for rests
-		if (midiNote < 0 || midiNote == null || midiNote > 127) { 
-			this.lastNoteSent = -1;
-			return; 
-		}
+			//calculate new midi note based on scale degree and scale
+			var midiNote;
+			if (scale != null) {
+				var accidental = false;
+				var adjustedNoteNum = noteNum;
+				if (noteNum * 10 % 10 != 0) { //is there a decimal?
+					adjustedNoteNum = Math.floor(Math.abs(noteNum)) * noteNum / Math.abs(noteNum); //make positive for floor then add back sign
+					accidental = true;
+				}
+				midiNote = scale.slice(adjustedNoteNum % scale.length)[0] + Math.floor(adjustedNoteNum / scale.length) * 12 + (this.octave * 12);
 
-		//send MIDI msg
-		const noteOnMessage = [0x90 + this.channel - 1, midiNote, this.velocity];    // 0x90 note on + channel, midi pitch num, velocity
-		var output = midi.outputs.get(outputMidiID);
-		output.send(noteOnMessage);
+				//increase MIDI note by one if there was a decimal
+				if (accidental) {
+					if (noteNum > 0) {
+						midiNote += 1;
+					} else {
+						midiNote -= 1;
+					}
+				}
+			}
+			else {
+				midiNote = noteNum;
+			}
 
-		this.lastNoteSent = midiNote;
+			//look for rests
+			if (midiNote < 0 || midiNote == null || midiNote > 127) { 
+				this.lastNoteSent[0] = -1;
+				return; 
+			}
+
+			//send MIDI msg
+			const noteOnMessage = [0x90 + this.channel - 1, midiNote, this.velocity];    // 0x90 note on + channel, midi pitch num, velocity
+			var output = midi.outputs.get(outputMidiID);
+			output.send(noteOnMessage);
+			document.getElementById("midiOutMonitor").innerHTML = [midiNote, this.velocity, this.channel];
+
+			this.lastNoteSent.push( midiNote )
+		}//for loop
 
 		//for console logging
 		if (this.monitor) console.log(this.name + ' midi: ' + midiNote, ' vel: ' + this.velocity);
-	}
+	}//sendNote
 
 	sendCC() {
 		const ccMessage = [0xB0 + this.channel - 1, this.controllerNum, this.curVal];    // 0xB0 CC + channel, controller number, data
@@ -193,11 +209,11 @@ export class Seq {
 			this.index = 0;
 			return null;
 		}
-		var note = this.vals[Math.round(this.valsInd >= 0 ? this.valsInd : (this.vals.length - this.valsInd))];
-		//below removes increment and moves this to updateIndex()
 
 		//update index
-		this.valsInd = this.updateIndex(this.valsInd)
+		this.valsInd = this.updateIndex(this.valsInd) % this.vals.length
+
+		var note = this.vals[Math.floor(this.valsInd >= 0 ? this.valsInd : (this.vals.length - this.valsInd))];
 
 		//handle out of bounds
 		var sign = this.valsInd != 0 ? Math.round(this.valsInd / Math.abs(this.valsInd)) : 1;
@@ -270,6 +286,7 @@ export class Seq {
 		return;
 	}
 
+	//keep track of global arrays accessed by seq
 	updateArrays() {
 		if (this.valsName) {
 			var newVals = eval('globalThis.' + this.valsName);
@@ -284,6 +301,7 @@ export class Seq {
 			}
 			this.durs = newDurs;
 		}
+		if( !Array.isArray(this.vals)) this.vals = [this.vals]
 	}
 
 	updateDisplay(){
@@ -292,9 +310,10 @@ export class Seq {
 		  const numRows = Math.ceil(this.vals.length / numCols);
 		  const forceSpace = 1; //manually specify extra space between values
 
-		  //format rests and ties
-		  const replacedVals = this.vals.map(value => {
-			  if (value < -999999990) {
+		  //format rests and ties		  
+		  const replacedVals = this.vals.map((value,index) => {
+		  	  if( Array.isArray(this.vals[index])) return value;
+			  else if (value < -999999990) {
 			    return '_';
 			  } else if (value < -27654321) {
 			    return '^'
@@ -302,6 +321,7 @@ export class Seq {
 			    return value;
 			  }
 			});
+			
 
 		  const maxLength = Math.max(...replacedVals.map(value => value.toString().length)) + forceSpace;
 
@@ -314,6 +334,7 @@ export class Seq {
 				return leadingSpaces + valueString;
 			});
 			
+			//highlight vurrent value
 			formattedValues[this.valsInd] = `<span style="font-weight: bold; color: red;">${formattedValues[this.valsInd]}</span>`
 
 			//generate rows of values
@@ -341,8 +362,8 @@ export class Seq {
 
 		  const formattedText = formattedTextWithBlankLines.join('\n'); // Join rows with line breaks
 
-		  textSources[this.name] = formattedText
-		  textHeaders[this.name] = 'Sequencer ' + this.name + ' values'
+		  textSources[this.name + '.vals'] = formattedText
+		  textHeaders[this.name + '.vals'] = 'Sequencer ' + this.name + ' values'
 		  //curDisplaySource = this.name
 		  updateDisplay()
 	}

@@ -209,13 +209,13 @@ function runCode(code) {
 		//this lets us pass an array to Seq and updates to the array are
 		//passed through to the seq
 		var inputs = removeArray(line).replace('/', '').match(/(\w+)\s*=\s*new\s+Seq\((\w+),?\s*(\w+)?,?\s*\d*\)/);
-		console.log(inputs)
+		//console.log(inputs)
 		if (inputs) {
-			console.log(inputs)
+			//console.log(inputs)
 			var seqName = inputs[1];
 			var notes = isNumber(inputs[2]) ? null : inputs[2]; //set to null if notes is a number (at this point, arrays have been converted to numbers)
 			var durs = isNumber(inputs[3]) ? null : inputs[3];
-			console.log('seqArrays', seqName, notes, durs)
+			//console.log('seqArrays', seqName, notes, durs)
 			seqArrays[seqName] = [notes, durs];
 		}
 		code += ';';  //enable multiple lines to execute at once
@@ -237,7 +237,7 @@ function runCode(code) {
 				window[variableName] = eval(assignment[1]);
 				//if it's a sequencer, add to list
 				if (eval(variableName) instanceof Seq) {
-					console.log(seqsToStart, variableName, seqArrays)
+					//console.log(seqsToStart, variableName, seqArrays)
 					seqsToStart[variableName] = eval(variableName);
 					eval(variableName).valsName = seqArrays[variableName][0];
 					eval(variableName).dursName = seqArrays[variableName][1];
