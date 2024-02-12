@@ -43,6 +43,11 @@ export let cos = function(val){
   return Math.cos(val)
 }
 
+export let sin = function(val){
+  if(val < -100000) return _
+  return Math.sin(val)
+}
+
 export let random = function(val = 1){
   return Math.random() * val
 }
