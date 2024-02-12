@@ -2,10 +2,10 @@ import {
 	midi, onMIDISuccess, onMIDIFailure, setMidiInput, setMidiOutput, getMidiIO,
 	handleMidiInput, outputMidiID, midiMap, ccMap, stopMap, mute, muted, toggleMute
 } from "./midiControl.js";
-import { Seq, seqs_dict, checkSeqs, _, stopEverything } from './seqControl.js'
+import { Seq, seqs_dict, checkSeqs, _, stopEverything, reset } from './seqControl.js'
 import { makingIf, startTern, addToAlgs, assignAlg } from "./algorithmControl.js";
 import { createStarterText, starterCode } from "./starterCode.js"
-import { floor, ceil, peak, cos, round, trunc, abs } from './midiMath.js';
+import { floor, ceil, peak, cos, sin, round, trunc, abs } from './midiMath.js';
 import{ updateDisplay, display } from './display.js'
 
 //http-server -o index.html -p 8000
@@ -22,7 +22,7 @@ export var alg_names = {};
 export var clockWorker = null;
 
 var seqs = []
-var seqsToStart = {}
+export var seqsToStart = {}
 
 
 /************************************
@@ -75,6 +75,10 @@ function panic(){
 			output.send(noteOffMessage);
 		}
 	}
+}
+
+export function resetClock(){
+	globalClock = 0
 }
 
 /**
@@ -187,7 +191,7 @@ function runCode(code) {
 		}
 
 		//ignore lines that start with comments
-		if (line[0] === '/' && line[1] === '/') line = ''
+		if (line[0] === '/' && line[1] === '/') line = '\t'
 
 		//add 'globalThis.' to every variable to ensure that they are globally scoped in node
 		//add global.this to all variable definitions
@@ -205,10 +209,13 @@ function runCode(code) {
 		//this lets us pass an array to Seq and updates to the array are
 		//passed through to the seq
 		var inputs = removeArray(line).replace('/', '').match(/(\w+)\s*=\s*new\s+Seq\((\w+),?\s*(\w+)?,?\s*\d*\)/);
+		console.log(inputs)
 		if (inputs) {
+			console.log(inputs)
 			var seqName = inputs[1];
 			var notes = isNumber(inputs[2]) ? null : inputs[2]; //set to null if notes is a number (at this point, arrays have been converted to numbers)
 			var durs = isNumber(inputs[3]) ? null : inputs[3];
+			console.log('seqArrays', seqName, notes, durs)
 			seqArrays[seqName] = [notes, durs];
 		}
 		code += ';';  //enable multiple lines to execute at once
@@ -230,6 +237,7 @@ function runCode(code) {
 				window[variableName] = eval(assignment[1]);
 				//if it's a sequencer, add to list
 				if (eval(variableName) instanceof Seq) {
+					console.log(seqsToStart, variableName, seqArrays)
 					seqsToStart[variableName] = eval(variableName);
 					eval(variableName).valsName = seqArrays[variableName][0];
 					eval(variableName).dursName = seqArrays[variableName][1];
