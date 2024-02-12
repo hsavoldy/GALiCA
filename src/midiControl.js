@@ -28,6 +28,7 @@ function initializeGlobalVariables(){
 		eval('globalThis.CC'+i+'_func = function(){return CC' +i+ '}');
 	}
 	globalThis.CC = new Array(128).fill(0)
+	globalThis.midiOn_func = function(x){return x}
 }
 
 export function onMIDIFailure(msg) {
@@ -98,7 +99,6 @@ export function setMidiOutput(outputID) {
 	}
 }
 export function handleMidiInput(message) {
-	document.getElementById("lastMidi").innerHTML = [message.data[1], message.data[2]];
 	// console.log(message);
 	if (message.data[1] != null) {
 		let msg_type = 'note';
@@ -111,6 +111,8 @@ export function handleMidiInput(message) {
 		//could parse CCs to look for mod wheel, pitch bend, etc.
 		// updateStatusBar(['midi_input', msg_type, message.data[1], message.data[2]]);
 		//document.getElementById("lastMidi").innerHTML = [message.data[0], message.data[1], message.data[2]];
+		if(msg_type === 'cc') document.getElementById("midiInMonitor").innerHTML = [msg_type + message.data[1], message.data[2], message.data[2]];
+		else document.getElementById("midiInMonitor").innerHTML = [message.data[1], message.data[2], message.data[2]];
 	}
 	if (midiClock) {
 		getMIDIClock(message);
@@ -188,6 +190,7 @@ function handleNote(message) {
 			}
 
 		}
+		try{midiOn_func(note)}catch{}
 	}else if(command >= 128 & command <=143){ //note off
 		midiMsgs[note] = null;
 	}
