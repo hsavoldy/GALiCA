@@ -27,8 +27,10 @@ export function display(div, source) {
 }
 
 export function updateDisplay(){
+  updateDefaultText()
   const topDiv = document.getElementById("divA");
   const botDiv = document.getElementById("divB");
+
   
   let headerText = `<h2>${textHeaders[curDisplaySource[0]] || textHeaders['default']}</h2>`;
   let bodyText = textSources[curDisplaySource[0]] || textSources['default'];
@@ -41,15 +43,16 @@ export function updateDisplay(){
   //botDiv.textContent = textSources[curDisplaySource] || textSources['default']
 }
 
-textSources.default = `
-  Choose a source to display in this div using the function display(div, source).
-  
-  To display the values of a sequencer called 'a' try:
-  
-  display( 'divA', 'a.vals')
-  
-  Available sources are: 
-  * ${Object.keys(textSources).join('\n* ')}`
-
+function updateDefaultText(){
+  textSources.default = `
+    Choose a source to display in this div using the function display(div, source).
+    
+    To display the values of a sequencer called 'a' try:
+    
+    display( 'divA', 'a')
+    
+    Available sources are: 
+    * ${Object.keys(textSources).join('\n* ')}`
+}
 
 updateDisplay()
