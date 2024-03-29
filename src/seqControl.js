@@ -131,7 +131,7 @@ export class Seq {
 			// var prevIsArray = Array.isArray(this.lastNoteSent)
 
 			//look for ties, e.g. -87654321
-			if (noteNum > -900000000 && noteNum < -7000000 && !isArray) return;
+			if (noteNum > -900000000 && noteNum < -7000000) return;
 
 			//look for existing active note to send noteoff
 			if( prevNotes[0] !== -1){
