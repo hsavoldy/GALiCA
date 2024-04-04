@@ -1,5 +1,5 @@
  import { globalClock, resetClock, major, minor, scale, beatsPerMeasure, seqsToStart } from './main.js';
-import { muted, midi, outputMidiID, beat } from './midiControl.js';
+import { muted, midi, outputMidiID, outputMidiID2, beat } from './midiControl.js';
 import { floor,ceil,peak,round,trunc,abs,cos,random} from './midiMath.js'
 import{ textSources, textHeaders, updateDisplay, display, curDisplaySource } from './display.js'
 
@@ -131,6 +131,7 @@ export class Seq {
 			// var prevIsArray = Array.isArray(this.lastNoteSent)
 
 			//look for ties, e.g. -87654321
+			//if (noteNum > -900000000 && noteNum < -7000000  && !isArray) return;
 			if (noteNum > -900000000 && noteNum < -7000000) return;
 
 			//look for existing active note to send noteoff

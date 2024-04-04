@@ -8,6 +8,7 @@ export var muted = false;
 export var beat = 0;
 
 export var outputMidiID = null;
+export var outputMidiID2 = null;
 
 export var midiMsgs = {};
 export var ccCallbacks = {};
@@ -29,6 +30,7 @@ function initializeGlobalVariables(){
 	}
 	globalThis.CC = new Array(128).fill(0)
 	globalThis.midiOn_func = function(x){return x}
+	globalThis.midiOff_func = function(x){return x}
 }
 
 export function onMIDIFailure(msg) {
@@ -98,6 +100,20 @@ export function setMidiOutput(outputID) {
 		console.warn('Invalid output ID');
 	}
 }
+
+//for second midi output device
+export function setMidiOutput(outputID) {
+	if (Array.isArray(outputID)) {
+		console.warn('Can only handle one MIDI output. Please enter one ID.')
+	}
+	if (outputID in midi_output_ids & midi.outputs.get(midi_output_ids[outputID]) != null) {
+		outputMidiID2 = midi_output_ids[outputID];
+		console.log("MIDI output 2 set to: " + midi_output_names[outputID]);
+	} else {
+		console.warn('Invalid output ID');
+	}
+}
+
 export function handleMidiInput(message) {
 	// console.log(message);
 	if (message.data[1] != null) {
@@ -154,19 +170,22 @@ function getMIDIClock(message) {
 
 function handleCC(message){
 	var command = message.data[0];
+	var channel = message.data[0]>>4
 	var note = message.data[1];
 	var value = (message.data.length > 2) ? message.data[2] : 0; // a velocity value might not be included with a noteOff command
 	if (command >= 176 & command <= 191) { //may be higher than 176 depending on channel number
+		//console.log(channel,note,value)
 		midiMsgs[note] = value;
 		eval('globalThis.CC'+note+'='+value+';');
 		try{ globalThis.CC[note] = value} catch(e){console.log(e)}
 		try{
 			// console.log('CC'+note+'_func');
 			eval('globalThis.CC'+note+'_func')();
-		}catch{}
+		}catch{"error with CC func"}
 		try{
 			eval('globalThis.CC'+note+'_alg')();
 		}catch{}
+		sendCC(note, value, channel)
 	}
 
 }
@@ -178,7 +197,7 @@ function handleNote(message) {
 	if (command >= 144 & command <= 159) { //note on- may be higher than 144 depending on channel number
 		midiMsgs[note] = velocity;		
 		try{
-			eval('midi'+note%12+'_func')();
+			eval('midi'+note%12+'_func')(note,velocity);
 		}catch{}
 		for (var key in seqs_dict) {
 			var seq = seqs_dict[key];
@@ -193,6 +212,7 @@ function handleNote(message) {
 		try{midiOn_func(note)}catch{}
 	}else if(command >= 128 & command <=143){ //note off
 		midiMsgs[note] = null;
+		try{midiOff_func(note)}catch{}
 	}
 }
 
@@ -227,4 +247,11 @@ export function unmute() {
 
 export function toggleMute() {
 	muted = !muted;
+}
+
+export function sendCC(num, val, channel){
+	const ccMessage = [0xB0 + channel - 1, num, val];    // 0xB0 CC + channel, controller number, data
+
+	var output = midi.outputs.get(outputMidiID);
+	output.send(ccMessage);
 }

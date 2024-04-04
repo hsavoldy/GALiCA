@@ -1,6 +1,6 @@
 import {
-	midi, onMIDISuccess, onMIDIFailure, setMidiInput, setMidiOutput, getMidiIO,
-	handleMidiInput, outputMidiID, midiMap, ccMap, stopMap, mute, muted, toggleMute
+	midi, onMIDISuccess, onMIDIFailure, setMidiInput, setMidiOutput, setMidiOutput2, getMidiIO,
+	handleMidiInput, outputMidiID, outputMidiID2, midiMap, ccMap, stopMap, mute, muted, toggleMute
 } from "./midiControl.js";
 import { Seq, seqs_dict, checkSeqs, _, stopEverything, reset } from './seqControl.js'
 import { makingIf, startTern, addToAlgs, assignAlg } from "./algorithmControl.js";
