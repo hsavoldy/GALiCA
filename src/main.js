@@ -1,12 +1,22 @@
 import {
 	midi, onMIDISuccess, onMIDIFailure, setMidiInput, setMidiOutput, setMidiOutput2, getMidiIO,
-	handleMidiInput, outputMidiID, outputMidiID2, midiMap, ccMap, stopMap, mute, muted, toggleMute
+	handleMidiInput, outputMidiID, outputMidiID2, midiMap, ccMap, stopMap, mute, muted, toggleMute, sendNote2
 } from "./midiControl.js";
 import { Seq, seqs_dict, checkSeqs, _, stopEverything, reset } from './seqControl.js'
 import { makingIf, startTern, addToAlgs, assignAlg } from "./algorithmControl.js";
 import { createStarterText, starterCode } from "./starterCode.js"
 import { floor, ceil, peak, cos, sin, round, trunc, abs } from './midiMath.js';
 import{ updateDisplay, display } from './display.js'
+
+import{ LaunchControlXL } from "./LaunchControlXL.js";
+const lcxl = new LaunchControlXL();
+// Import tracks directly
+const { track } = lcxl;
+
+// Example usage
+//launchControl.turnOnUserKnobLED(0);
+//console.log(launchControl.getUserLedState());
+
 
 //http-server -o index.html -p 8000
 export let globalClock = 0;

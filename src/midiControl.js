@@ -102,7 +102,7 @@ export function setMidiOutput(outputID) {
 }
 
 //for second midi output device
-export function setMidiOutput(outputID) {
+export function setMidiOutput2(outputID) {
 	if (Array.isArray(outputID)) {
 		console.warn('Can only handle one MIDI output. Please enter one ID.')
 	}
@@ -127,8 +127,8 @@ export function handleMidiInput(message) {
 		//could parse CCs to look for mod wheel, pitch bend, etc.
 		// updateStatusBar(['midi_input', msg_type, message.data[1], message.data[2]]);
 		//document.getElementById("lastMidi").innerHTML = [message.data[0], message.data[1], message.data[2]];
-		if(msg_type === 'cc') document.getElementById("midiInMonitor").innerHTML = [msg_type + message.data[1], message.data[2], message.data[2]];
-		else document.getElementById("midiInMonitor").innerHTML = [message.data[1], message.data[2], message.data[2]];
+		if(msg_type === 'cc') document.getElementById("midiInMonitor").innerHTML = [msg_type + message.data[1], message.data[2], message.data[0]&15];
+		else document.getElementById("midiInMonitor").innerHTML = [message.data[1], message.data[2], message.data[0]&15];
 	}
 	if (midiClock) {
 		getMIDIClock(message);
@@ -254,4 +254,11 @@ export function sendCC(num, val, channel){
 
 	var output = midi.outputs.get(outputMidiID);
 	output.send(ccMessage);
+}
+
+export function sendNote2(num, val, channel){
+	const msg = [144 + channel - 1, num, val];    // 0xB0 CC + channel, controller number, data
+	console.log('sendNote2 ', num, val, channel)
+	var output = midi.outputs.get(outputMidiID2);
+	output.send(msg);
 }
