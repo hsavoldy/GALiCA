@@ -1,4 +1,4 @@
-import { sendNote2 } from "./midiControl.js";
+import { sendMidiNote2 } from "./midiControl.js";
 
 /*
 Hex Decimal Colour Brightness
@@ -24,7 +24,7 @@ export class LaunchControlXL {
   constructor() {
   	//midi note numbers for LCXL
   	this.topKnobNotes = [13,29, 45, 61, 77, 93, 109, 125]
-	this.buttonNotes = [41, 57, 73, 89]
+	  this.buttonNotes = [41, 57, 73, 89]
     // Define note numbers for LEDs
     this.leds = {
       userKnob: [0, 1, 2],
@@ -35,14 +35,19 @@ export class LaunchControlXL {
     
 
     this.colorMap = {
-      'dimRed': 13,
+      'dimred': 13,
       'red': 15,
-      'dimGreen': 28,
+      'dimgreen': 28,
       'green': 60,
-      'dimAmber': 29,
+      'dimamber': 29,
       'amber': 63,
       'yellow': 62,
-      'off': 0
+      'dimyellow': 62,
+      'off': 0,
+      //for transport
+      'bright':127,
+      'med':40,
+      'dim':20
       // Add more color mappings as needed
     };
 
@@ -84,7 +89,8 @@ export class LaunchControlXL {
   }
 
   // Method to set LED brightness for a specific LED
-  setLed(led, val) {
+  setLed(led, val, channel=-1) {
+    if(channel==-1) channel = this.curBank == 'factory' ? 1 : 9
   	// Check if the provided val is a string
     if (typeof val === 'string') {
       // Check if the string representation exists in the colorMap
@@ -96,11 +102,15 @@ export class LaunchControlXL {
         return;
       }
     }
+    if (typeof led === 'number') {
+      sendMidiNote2(channel, led, val)
+      console.log(`Setting LED with note ${led} to brightness ${val} on chan ${channel}`);
+      return
+    }
     // Check if the LED is a knob
-    let channel = this.curBank == 'factory' ? 1 : 9
     if (led.hasOwnProperty('note') && led.hasOwnProperty('value')) {
-      sendNote2(led.note, val, channel)
-      console.log(`Setting LED with note ${led.note} to brightness ${val}`);
+      sendMidiNote2(channel, led.note, val)
+      //console.log(`Setting LED with note ${led.note} to brightness ${val}`);
       // For demonstration, we're just logging the action here
     } else {
       console.error("Invalid LED format");

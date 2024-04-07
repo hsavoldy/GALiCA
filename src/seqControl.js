@@ -1,5 +1,5 @@
- import { globalClock, resetClock, major, minor, scale, beatsPerMeasure, seqsToStart } from './main.js';
-import { muted, midi, outputMidiID, outputMidiID2, beat } from './midiControl.js';
+import { globalClock, resetClock, major, minor, scale, beatsPerMeasure, seqsToStart } from './main.js';
+import { muted, midi, outputMidiID, outputMidiID2, beat, sendMidiCC, sendMidiNote, sendMidiNote2 } from './midiControl.js';
 import { floor,ceil,peak,round,trunc,abs,cos,random} from './midiMath.js'
 import{ textSources, textHeaders, updateDisplay, display, curDisplaySource } from './display.js'
 
@@ -62,6 +62,7 @@ export class Seq {
 		this.repopulating = false;
 		this.inserting = false;
 		this.stopped = false;
+		this.mute = false;
 		this.nextValTime = globalClock
 		this.channel = channel;
 		this.velocity = 127;
@@ -84,7 +85,7 @@ export class Seq {
 	executeStep() {
 		this.updateArrays();
 		this.advanceStep();
-		this.callback();
+		if (!this.mute) this.callback();
 		this.stepFunc();
 		this.updateDisplay();
 	}
@@ -96,7 +97,6 @@ export class Seq {
 		this.curVal = this.transform(this.curVal);
 
 		if (this.curVal == null) { return; }
-		if (muted) { return; }
 
 		this.channel = checkChannel(this.channel);
 	}
@@ -106,9 +106,10 @@ export class Seq {
 			return;
 		}
 		var channel = checkChannel(this.channel);
-		const noteOffMessage = [0x80 + channel - 1, noteNum, 0];    // 0x80 note off + channel, midi pitch num, velocity
-		var output = midi.outputs.get(outputMidiID);
-		output.send(noteOffMessage);
+		sendMidiNote(channel, noteNum, 0)
+		// const noteOffMessage = [0x80 + channel - 1, noteNum, 0];    // 0x80 note off + channel, midi pitch num, velocity
+		// var output = midi.outputs.get(outputMidiID);
+		// output.send(noteOffMessage);
 	}
 
 	//called for every note right before execution
@@ -173,10 +174,13 @@ export class Seq {
 			}
 
 			//send MIDI msg
-			const noteOnMessage = [0x90 + this.channel - 1, midiNote, this.velocity];    // 0x90 note on + channel, midi pitch num, velocity
-			var output = midi.outputs.get(outputMidiID);
-			output.send(noteOnMessage);
-			document.getElementById("midiOutMonitor").innerHTML = [midiNote, this.velocity, this.channel];
+			if (this.mute)return;
+			var channel = checkChannel(this.channel);
+			sendMidiNote(channel, midiNote, this.velocity)
+			// const noteOnMessage = [0x90 + this.channel - 1, midiNote, Math.floor(this.velocity)];    // 0x90 note on + channel, midi pitch num, velocity
+			// var output = midi.outputs.get(outputMidiID);
+			// output.send(noteOnMessage);
+			// document.getElementById("midiOutMonitor").innerHTML = [midiNote, this.velocity, this.channel];
 
 			this.lastNoteSent.push( midiNote )
 		}//for loop
@@ -186,11 +190,14 @@ export class Seq {
 	}//sendNote
 
 	sendCC() {
-		const ccMessage = [0xB0 + this.channel - 1, this.controllerNum, this.curVal];    // 0xB0 CC + channel, controller number, data
+		if (this.mute)return;
+		var channel = checkChannel(this.channel);
+		sendMidiCC(channel, this.controllerNum, this.curVal)
+		// const ccMessage = [0xB0 + this.channel - 1, this.controllerNum, Math.floor(this.curVal)];    // 0xB0 CC + channel, controller number, data
 
-		var output = midi.outputs.get(outputMidiID);
-		output.send(ccMessage);
-		console.log(ccMessage);
+		// var output = midi.outputs.get(outputMidiID);
+		// output.send(ccMessage);
+		// //console.log(ccMessage);
 	}
 
 	timeForNext() {
@@ -230,7 +237,7 @@ export class Seq {
 		} else{
 			nextStep = this.durs;
 		}
-		this.nextValTime = globalClock + nextStep * 24 * 4;
+		this.nextValTime = globalClock + nextStep * 24 * 8;
 		
 		return note
 	}

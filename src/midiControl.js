@@ -27,6 +27,7 @@ function initializeGlobalVariables(){
 	for(let i=0;i<128;i++){
 		eval('globalThis.CC'+i+'='+0+';');
 		eval('globalThis.CC'+i+'_func = function(){return CC' +i+ '}');
+		eval('globalThis.note'+i+'_func = function(note,val){}');
 	}
 	globalThis.CC = new Array(128).fill(0)
 	globalThis.midiOn_func = function(x){return x}
@@ -66,6 +67,10 @@ export function getMidiIO(){
 		num += 1;
 	}
 	return midiInputs + midiOutputs
+}
+
+export function printMidiPorts(){
+	console.log(getMidiIO())
 }
 
 export function setMidiInput(inputID) {
@@ -185,7 +190,7 @@ function handleCC(message){
 		try{
 			eval('globalThis.CC'+note+'_alg')();
 		}catch{}
-		sendCC(note, value, channel)
+		sendMidiCC(note, value, channel)
 	}
 
 }
@@ -197,7 +202,7 @@ function handleNote(message) {
 	if (command >= 144 & command <= 159) { //note on- may be higher than 144 depending on channel number
 		midiMsgs[note] = velocity;		
 		try{
-			eval('midi'+note%12+'_func')(note,velocity);
+			eval('note'+note+'_func')(note,velocity);
 		}catch{}
 		for (var key in seqs_dict) {
 			var seq = seqs_dict[key];
@@ -212,6 +217,9 @@ function handleNote(message) {
 		try{midiOn_func(note)}catch{}
 	}else if(command >= 128 & command <=143){ //note off
 		midiMsgs[note] = null;
+		try{
+			eval('note'+note+'_func')(note,velocity);
+		}catch{}
 		try{midiOff_func(note)}catch{}
 	}
 }
@@ -249,16 +257,42 @@ export function toggleMute() {
 	muted = !muted;
 }
 
-export function sendCC(num, val, channel){
-	const ccMessage = [0xB0 + channel - 1, num, val];    // 0xB0 CC + channel, controller number, data
+export function sendMidiCC(num, val, channel){
+    // Clamp num and val within the range of 0-127
+    num = Math.max(0, Math.min(127, num));
+    val = Math.max(0, Math.min(127, val));
+    num = Math.floor(num)
+    val = Math.floor(val)
 
-	var output = midi.outputs.get(outputMidiID);
-	output.send(ccMessage);
+    const ccMessage = [0xB0 + channel - 1, num, val];    // 0xB0 CC + channel, controller number, data
+
+    var output = midi.outputs.get(outputMidiID);
+    output.send(ccMessage);
 }
 
-export function sendNote2(num, val, channel){
-	const msg = [144 + channel - 1, num, val];    // 0xB0 CC + channel, controller number, data
-	console.log('sendNote2 ', num, val, channel)
+export function sendMidiNote(channel, note, vel){
+	// Clamp num and val within the range of 0-127
+    note = Math.max(0, Math.min(127, note));
+    vel = Math.max(0, Math.min(127, vel));
+    note = Math.floor(note)
+    vel = Math.floor(vel)
+
+	const msg = [144 + channel - 1, note, vel];    // 0xB0 CC + channel, controller number, data
+	//console.log('sendNote2 ', num, val, channel)
+	var output = midi.outputs.get(outputMidiID);
+	output.send(msg);
+	document.getElementById("midiOutMonitor").innerHTML = [note,vel,channel];
+}
+
+export function sendMidiNote2(channel, note, vel){
+	// Clamp num and val within the range of 0-127
+    note = Math.max(0, Math.min(127, note));
+    vel = Math.max(0, Math.min(127, vel));
+    note = Math.floor(note)
+    vel = Math.floor(vel)
+
+	const msg = [144 + channel - 1, note, vel];    // 0xB0 CC + channel, controller number, data
+	//console.log('sendNote2 ', num, val, channel)
 	var output = midi.outputs.get(outputMidiID2);
 	output.send(msg);
 }
