@@ -69,7 +69,8 @@ export class LaunchControlXL {
     		this.track[i].knob[j].note = this.topKnobNotes[i]+j
     	}
     	for(let j=0;j<2;j++){
-    		this.track[i].button[j].note = this.buttonNotes[Math.floor(i/4)+j*2]+i
+    		this.track[i].button[j].note = this.buttonNotes[Math.floor(i/4)+j*2]+i%4
+        console.log('track',i,'button',[j],this.buttonNotes[Math.floor(i/4)+j*2]+i%4)
     	}
     }
 

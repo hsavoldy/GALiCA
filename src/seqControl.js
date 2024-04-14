@@ -57,6 +57,7 @@ export class Seq {
 		this.index = 0;
 		this.valsInd = 0;
 		this.dursInd = 0;
+		this.i = 0;
 		this.noteInc = 1;
 		this.dursInc = 1;
 		this.repopulating = false;
@@ -215,6 +216,7 @@ export class Seq {
 		if (this.vals.length === 0) {
 			this.valsInd = 0;
 			this.index = 0;
+			this.i = this.index;
 			return null;
 		}
 
@@ -227,7 +229,8 @@ export class Seq {
 		var sign = this.valsInd != 0 ? Math.round(this.valsInd / Math.abs(this.valsInd)) : 1;
 		this.valsInd = this.valsInd * sign;
 		this.valsInd = Math.round(((this.valsInd) % this.vals.length) * sign);
-		this.index = this.valsInd;''
+		this.index = this.valsInd;
+		this.i = this.index;
 
 		var nextStep = null;
 		//take care of incrementing duration index in case where durs is an array
@@ -257,6 +260,7 @@ export class Seq {
 		if (this.valsInd >= this.newVals.length) {
 			this.valsInd = this.newVals.length - 1;
 			this.index = this.valsInd;
+			this.i = this.index;
 		}
 		this.vals = this.newVals;
 		this.repopulating = false;
@@ -282,6 +286,7 @@ export class Seq {
 	reset() {
 		this.valsInd = 0;
 		this.index = 0;
+		this.i = this.index;
 		this.dursInd = 0;
 		this.nextValTime = 0;
 		this.sendNoteOff(this.lastNoteSent, this.channel);
@@ -300,6 +305,7 @@ export class Seq {
 			var newVals = eval('globalThis.' + this.valsName);
 			this.valsInd = this.valsInd % newVals.length;
 			this.index = this.valsInd;
+			this.i = this.index;
 			this.vals = newVals;
 		}
 		if (this.dursName) {
